@@ -1,0 +1,18 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.1
+neo4j==5.18.0
+pydantic==2.9.2
+python-dotenv==1.0.1
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+email-validator==2.1.0.post1
+redis==5.0.1
+celery==5.3.6
+pandas==2.2.2
+numpy==2.1.3
+scipy==1.13.1
+implicit==0.7.2       # для рекомендаций (ALS)
+scikit-learn==1.5.2    # если планируешь content-based часть
+jinja2==3.1.4          # для шаблонов (опционально)
+requests==2.32.3       # для внешних API
+aiofiles==23.2.1       # для статики/загрузок
