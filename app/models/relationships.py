@@ -16,3 +16,9 @@ class RatedRelation(BaseModel):
     movie_id: str
     rating: float
     ts: datetime = datetime.utcnow()
+    
+class PurchasedRelation(BaseModel):
+    movie_id: str
+    purchased_at: datetime = datetime.utcnow()
+    price: Optional[float] = None
+    status: Optional[str] = "completed"  # или "pending", "refunded"
