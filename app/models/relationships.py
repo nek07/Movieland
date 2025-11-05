@@ -22,3 +22,5 @@ class PurchasedRelation(BaseModel):
     purchased_at: datetime = datetime.utcnow()
     price: Optional[float] = None
     status: Optional[str] = "completed"  # или "pending", "refunded"
+    
+    
