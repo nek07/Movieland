@@ -1,8 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from models.user import UserCreate, UserResponse, UserLogin, UpdateProfile
 from api.user_routes import create_user, get_user_by_email, update_user
+from api.movie_routes import get_all_movies,  get_movie_by_id
 from services.auth import hash_password, verify_password, create_access_token
 import uuid
+from models.movie import Movie
+from typing import List, Optional
 
 app = FastAPI(title="Movieland Auth API")
 
@@ -45,3 +48,16 @@ def update_profile(user_id: str, profile: UpdateProfile):
     if not updated_user:
         raise HTTPException(status_code=404, detail="Пользователь не найден или данные не изменились")
     return {"message": "Профиль обновлен", "user": dict(updated_user)}
+
+@app.get("/movies", response_model=List[Movie])
+def read_movies(sort_by: Optional[str] = Query(None, description="Sort by: price, rating, year, title"), 
+                descending: bool = False):
+    return get_all_movies(sort_by=sort_by, descending=descending)
+
+
+@app.get("/movies/{movie_id}", response_model=Movie)
+def read_movie(movie_id: str):
+    movie = get_movie_by_id(movie_id)
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie not found")
+    return movie

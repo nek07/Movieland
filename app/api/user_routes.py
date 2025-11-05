@@ -1,6 +1,7 @@
 from neo4j import GraphDatabase
 import os
 from services.auth import hash_password
+from models.relations import ViewedRelation, LikedRelation, RatedRelation, PurchasedRelation
 driver = GraphDatabase.driver(
     "neo4j+s://f3ee1fdc.databases.neo4j.io",
     auth=("neo4j", "_jhDbmYBprsMhi_nbYgrcj8sre3cyjF8KxkglFPX3a4")
@@ -51,3 +52,66 @@ def update_user(user_id: str, name: str = None, email: str = None, password: str
     with driver.session() as session:
         record = session.run(query, **params).single()
         return record["u"] if record else None
+    
+
+
+def add_viewed(user_id: str, relation: ViewedRelation):
+    query = """
+    MATCH (u:User {id: $user_id})
+    MATCH (m:Movie {id: $movie_id})
+    MERGE (u)-[r:VIEWED]->(m)
+    ON CREATE SET r.count = $count, r.lastTs = $lastTs
+    ON MATCH SET r.count = r.count + $count, r.lastTs = $lastTs
+    RETURN r
+    """
+    with driver.session() as session:
+        session.run(query,
+                    user_id=user_id,
+                    movie_id=relation.movie_id,
+                    count=relation.count,
+                    lastTs=relation.lastTs.isoformat())
+
+def add_liked(user_id: str, relation: LikedRelation):
+    query = """
+    MATCH (u:User {id: $user_id})
+    MATCH (m:Movie {id: $movie_id})
+    MERGE (u)-[r:LIKED]->(m)
+    SET r.ts = $ts
+    RETURN r
+    """
+    with driver.session() as session:
+        session.run(query,
+                    user_id=user_id,
+                    movie_id=relation.movie_id,
+                    ts=relation.ts.isoformat())
+
+def add_rated(user_id: str, relation: RatedRelation):
+    query = """
+    MATCH (u:User {id: $user_id})
+    MATCH (m:Movie {id: $movie_id})
+    MERGE (u)-[r:RATED]->(m)
+    SET r.rating = $rating, r.ts = $ts
+    RETURN r
+    """
+    with driver.session() as session:
+        session.run(query,
+                    user_id=user_id,
+                    movie_id=relation.movie_id,
+                    rating=relation.rating,
+                    ts=relation.ts.isoformat())
+
+def add_purchased(user_id: str, relation: PurchasedRelation):
+    query = """
+    MATCH (u:User {id: $user_id})
+    MATCH (m:Movie {id: $movie_id})
+    MERGE (u)-[r:PURCHASED]->(m)
+    SET r.purchased_at = $purchased_at, r.price = $price, r.status = $status
+    RETURN r
+    """
+    with driver.session() as session:
+        session.run(query,
+                    user_id=user_id,
+                    movie_id=relation.movie_id,
+                    purchased_at=relation.purchased_at.isoformat(),
+                    price=relation.price,
+                    status=relation.status)
