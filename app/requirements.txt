@@ -3,7 +3,6 @@ uvicorn[standard]==0.30.1
 neo4j==5.18.0
 pydantic==2.9.2
 python-dotenv==1.0.1
-passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.3.0
 email-validator==2.1.0.post1
 redis==5.0.1
@@ -17,3 +16,5 @@ jinja2==3.1.4          # для шаблонов (опционально)
 requests==2.32.3       # для внешних API
 aiofiles==23.2.1       # для статики/загрузок
 dotenv
+bcrypt==4.0.1
+passlib[bcrypt]==1.7.4
