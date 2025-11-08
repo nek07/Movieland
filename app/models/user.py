@@ -2,7 +2,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
-
+from models.relations import ViewedRelation, LikedRelation, RatedRelation, PurchasedRelation
 class UserBase(BaseModel):
     id: str
     name: str
@@ -27,3 +27,13 @@ class UpdateProfile(BaseModel):
     name: str | None = None
     email: EmailStr | None = None
     password: str | None = None
+
+
+class UserHistoryResponse(BaseModel):
+    viewed: List[ViewedRelation] = []
+    liked: List[LikedRelation] = []
+    rated: List[RatedRelation] = []
+    purchased: List[PurchasedRelation] = []
+
+
+

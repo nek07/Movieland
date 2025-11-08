@@ -23,4 +23,3 @@ class PurchasedRelation(BaseModel):
     price: Optional[float] = None
     status: Optional[str] = "completed"  # или "pending", "refunded"
     
-    

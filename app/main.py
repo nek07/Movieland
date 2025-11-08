@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, Query
-from models.user import UserCreate, UserResponse, UserLogin, UpdateProfile
-from api.user_routes import create_user, get_user_by_email, update_user
+from models.user import UserCreate, UserHistoryResponse, UserResponse, UserLogin, UpdateProfile
+from api.user_routes import create_user, get_user_by_email, get_user_history, update_user
 from api.movie_routes import get_all_movies,  get_movie_by_id, get_movies_by_mood, get_movies_by_mood_with_scores
 from services.auth import hash_password, verify_password, create_access_token
 import uuid
@@ -126,3 +126,9 @@ def read_movie(
     add_viewed(user_id, ViewedRelation(movie_id=movie_id, lastTs=datetime.utcnow()))
     
     return movie
+
+
+@app.get("/users/{user_id}/history", response_model=UserHistoryResponse)
+def read_user_history(user_id: str):
+    history = get_user_history(user_id)
+    return history
