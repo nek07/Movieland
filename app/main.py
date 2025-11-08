@@ -1,11 +1,12 @@
 from fastapi import FastAPI, HTTPException, Query
 from models.user import UserCreate, UserResponse, UserLogin, UpdateProfile
 from api.user_routes import create_user, get_user_by_email, update_user
-from api.movie_routes import get_all_movies,  get_movie_by_id
+from api.movie_routes import get_all_movies,  get_movie_by_id, get_movies_by_mood, get_movies_by_mood_with_scores
 from services.auth import hash_password, verify_password, create_access_token
 import uuid
 from models.movie import Movie
 from typing import List, Optional
+
 
 app = FastAPI(title="Movieland Auth API")
 
@@ -61,3 +62,23 @@ def read_movie(movie_id: str):
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
     return movie
+
+@app.get("/movies/mood/{mood}", response_model=List[Movie])
+def read_movies_by_mood(
+    mood: str,
+    limit: int = 10,
+    weight_pop: float = 0.8,
+    weight_mood: float = 0.2,
+):
+    return get_movies_by_mood(mood, limit, weight_pop, weight_mood)
+
+from models.movie import MovieWithScore
+
+@app.get("/movies/mood_scores/{mood}", response_model=List[MovieWithScore])
+def read_movies_by_mood_with_scores(
+    mood: str,
+    limit: int = 10,
+    weight_pop: float = 0.8,
+    weight_mood: float = 0.2,
+):
+    return get_movies_by_mood_with_scores(mood, limit, weight_pop, weight_mood)

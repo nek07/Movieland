@@ -13,6 +13,10 @@ class Movie(BaseModel):
     title: str
     year: int
 
+class MovieWithScore(BaseModel):
+    movie: Movie
+    score: float
+
 class Genre(BaseModel):
     id: str
     name: str
