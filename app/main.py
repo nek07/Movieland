@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI, HTTPException, Query
 from models.user import UserCreate, UserResponse, UserLogin, UpdateProfile
 from api.user_routes import create_user, get_user_by_email, update_user
@@ -6,7 +7,8 @@ from services.auth import hash_password, verify_password, create_access_token
 import uuid
 from models.movie import Movie
 from typing import List, Optional
-
+from models.relations import ViewedRelation, LikedRelation, RatedRelation, PurchasedRelation
+from api.user_routes import add_viewed, add_liked, add_rated, add_purchased
 
 app = FastAPI(title="Movieland Auth API")
 
@@ -56,13 +58,6 @@ def read_movies(sort_by: Optional[str] = Query(None, description="Sort by: price
     return get_all_movies(sort_by=sort_by, descending=descending)
 
 
-@app.get("/movies/{movie_id}", response_model=Movie)
-def read_movie(movie_id: str):
-    movie = get_movie_by_id(movie_id)
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-    return movie
-
 @app.get("/movies/mood/{mood}", response_model=List[Movie])
 def read_movies_by_mood(
     mood: str,
@@ -82,3 +77,52 @@ def read_movies_by_mood_with_scores(
     weight_mood: float = 0.2,
 ):
     return get_movies_by_mood_with_scores(mood, limit, weight_pop, weight_mood)
+
+@app.post("/viewed/{user_id}")
+def create_viewed_relation(user_id: str, relation: ViewedRelation):
+    try:
+        add_viewed(user_id, relation)
+        return {"message": "Viewed relation added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/liked/{user_id}")
+def create_liked_relation(user_id: str, relation: LikedRelation):
+    try:
+        add_liked(user_id, relation)
+        return {"message": "Liked relation added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/rated/{user_id}")
+def create_rated_relation(user_id: str, relation: RatedRelation):
+    try:
+        add_rated(user_id, relation)
+        return {"message": "Rated relation added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/purchased/{user_id}")
+def create_purchased_relation(user_id: str, relation: PurchasedRelation):
+    try:
+        add_purchased(user_id, relation)
+        return {"message": "Purchased relation added successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/movies/{movie_id}", response_model=Movie)
+def read_movie(
+    movie_id: str,
+    user_id: str = Query(..., description="ID пользователя, который смотрит фильм")
+):
+    movie = get_movie_by_id(movie_id)
+    if not movie:
+        raise HTTPException(status_code=404, detail="Movie not found")
+    
+    # Добавляем или обновляем VIEWED релейшн
+    add_viewed(user_id, ViewedRelation(movie_id=movie_id, lastTs=datetime.utcnow()))
+    
+    return movie
