@@ -9,7 +9,7 @@ from models.movie import Movie
 from typing import List, Optional
 from models.relations import ViewedRelation, LikedRelation, RatedRelation, PurchasedRelation
 from api.user_routes import add_viewed, add_liked, add_rated, add_purchased
-
+from api.movie_routes import create_movie, delete_movie
 app = FastAPI(title="Movieland Auth API")
 
 @app.post("/register", response_model=UserResponse)
@@ -132,3 +132,42 @@ def read_movie(
 def read_user_history(user_id: str):
     history = get_user_history(user_id)
     return history
+
+
+# Добавление фильма
+@app.post("/movies/", response_model=Movie)
+def create_movie(movie: Movie):
+    return create_movie(movie)
+
+@app.delete("/movies/{movie_id}")
+def delete_movie(movie_id: str):
+    return delete_movie(movie_id)
+
+@app.get("/movies/", response_model=List[Movie])
+def read_movies(
+    min_rating: Optional[float] = Query(None, description="Минимальный рейтинг"),
+    max_rating: Optional[float] = Query(None, description="Максимальный рейтинг"),
+    title: Optional[str] = Query(None, description="Фильтр по названию"),
+    year: Optional[int] = Query(None, description="Фильтр по году выпуска"),
+    genre: Optional[str] = Query(None, description="Фильтр по жанру"),
+    tag: Optional[str] = Query(None, description="Фильтр по жанру"),
+    mood: Optional[str] = Query(None, description="Фильтр по жанру"),
+    sort_by: Optional[str] = Query(None, description="Сортировка по полю"),
+    descending: bool = Query(False, description="Сортировка по убыванию")
+):
+    movies = get_all_movies(
+        min_rating=min_rating,
+        max_rating=max_rating,
+        title=title,
+        year=year,
+        tag=tag,
+        mood=mood,
+        genre=genre,
+        sort_by=sort_by,
+        descending=descending
+    )
+    
+    if not movies:
+        raise HTTPException(status_code=404, detail="Movies not found")
+    
+    return movies

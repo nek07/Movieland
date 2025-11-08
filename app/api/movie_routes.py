@@ -6,16 +6,70 @@ driver = GraphDatabase.driver(
     "neo4j+s://f3ee1fdc.databases.neo4j.io",
     auth=("neo4j", "_jhDbmYBprsMhi_nbYgrcj8sre3cyjF8KxkglFPX3a4")
 )
-def get_all_movies(sort_by: Optional[str] = None, descending: bool = False) -> List[Movie]:
-    query = "MATCH (m:Movie) RETURN m"
-    
-    # Добавляем сортировку
+def execute_query(query: str, params: dict = None):
+    """
+    Универсальная функция для выполнения запроса к Neo4j.
+    Возвращает результат session.run()
+    """
+    with driver.session() as session:
+        result = session.run(query, params or {})
+        return result
+
+def get_all_movies(
+    min_rating: Optional[float] = None,
+    max_rating: Optional[float] = None,
+    title: Optional[str] = None,
+    year: Optional[int] = None,
+    genre: Optional[str] = None,
+    tag: Optional[str] = None,
+    mood: Optional[str] = None,
+    sort_by: Optional[str] = None,
+    descending: bool = False
+) -> List[Movie]:
+    query = "MATCH (m:Movie) "
+    filters = []
+
+    # Фильтры по параметрам фильма
+    if min_rating is not None:
+        filters.append("m.rating >= $min_rating")
+    if max_rating is not None:
+        filters.append("m.rating <= $max_rating")
+    if title:
+        filters.append("m.title CONTAINS $title")
+    if year:
+        filters.append("m.year = $year")
+
+    # Фильтры по релейшншипам
+    if genre:
+        query += "MATCH (m)-[:HAS_GENRE]->(g:Genre {name:$genre}) "
+    if tag:
+        query += "MATCH (m)-[:HAS_TAG]->(t:Tag {name:$tag}) "
+    if mood:
+        query += "MATCH (m)-[:HAS_MOOD]->(mo:Mood {name:$mood}) "
+
+    # Добавляем WHERE если есть фильтры
+    if filters:
+        query += "WHERE " + " AND ".join(filters) + " "
+
+    # Сортировка
     if sort_by in ["price", "rating", "year", "title"]:
         order = "DESC" if descending else "ASC"
-        query += f" ORDER BY m.{sort_by} {order}"
-    
+        query += f"ORDER BY m.{sort_by} "
+
+    query += "RETURN m"
+
+    params = {
+        "min_rating": min_rating,
+        "max_rating": max_rating,
+        "title": title,
+        "year": year,
+        "genre": genre,
+        "tag": tag,
+        "mood": mood
+    }
+
     with driver.session() as session:
-        result = session.run(query)
+        result = session.run(query, **{k: v for k, v in params.items() if v is not None})
         movies = []
         for record in result:
             m = record["m"]
@@ -221,3 +275,24 @@ def get_personal_by_history_with_scores(
             )
         )
     return out
+
+
+def create_movie(movie: Movie):
+    query = """
+    MERGE (m:Movie {id:$id})
+    SET m.movie_id=$movie_id,
+        m.posterUrl=$posterUrl,
+        m.price=$price,
+        m.rating=$rating,
+        m.synopsis=$synopsis,
+        m.title=$title,
+        m.year=$year
+    RETURN m
+    """
+    execute_query(query, movie.dict())
+    return movie
+
+def delete_movie(movie_id: str):
+    query = "MATCH (m:Movie {id:$movie_id}) DETACH DELETE m"
+    execute_query(query, {"movie_id": movie_id})
+    return {"message": "Movie deleted"}
