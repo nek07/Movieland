@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from models.user import UserCreate, UserResponse, UserLogin, UpdateProfile
 from api.user_routes import create_user, get_user_by_email, update_user
-from api.movie_routes import get_all_movies,  get_movie_by_id, get_movies_by_mood, get_movies_by_mood_with_scores
+from api.movie_routes import get_all_movies,  get_movie_by_id, get_movies_by_mood, get_movies_by_mood_with_scores, get_personal_by_history_with_scores
 from services.auth import hash_password, verify_password, create_access_token
 import uuid
 from models.movie import Movie
@@ -82,3 +82,7 @@ def read_movies_by_mood_with_scores(
     weight_mood: float = 0.2,
 ):
     return get_movies_by_mood_with_scores(mood, limit, weight_pop, weight_mood)
+
+@app.get("/recommend/personal_by_history", response_model=List[MovieWithScore])
+def recommend_personal_by_history(uid: str, limit: int = 10, w_pop: float = 0.2):
+    return get_personal_by_history_with_scores(uid=uid, limit=limit, w_pop=w_pop)
